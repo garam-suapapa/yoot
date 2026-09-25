@@ -104,3 +104,33 @@ body.playing main{flex:1;min-height:0;overflow:hidden}
 @media(max-width:700px){.app-shell{padding:0 12px 22px}.topbar{height:58px}.brand{font-size:18px}.brand-mark{width:30px;height:30px;font-size:22px}.topbar-tag{display:none}.setup-screen{padding:24px 0}.setup-intro h1{font-size:clamp(32px,8vw,44px)}.team-setup-grid{grid-template-columns:1fr}.team-setup{padding:15px}.piece-photo-grid{max-width:320px}.game-screen{padding:7px 0}.game-sidebar{max-height:48dvh}.turn-card{padding:12px}.score-card{padding:9px 12px}.legend{font-size:9px}.board-frame{border-radius:13px}}
 @media(max-height:660px) and (min-width:901px){.game-screen{padding:6px 0}.section-top{height:35px;flex-basis:35px}.turn-card{padding:10px}.score-card{padding:8px}.sensor-note{display:none}.current-team{margin:5px 0}.game-message{margin:5px 0}.stick-tray{height:58px}.stick{height:43px}.score-row{padding:4px 0}}
 @media(prefers-reduced-motion:reduce){.board-piece,.stick{transition:none!important}.board-piece.movable,.score-piece:not(:disabled),.moving-symbol{animation:none!important}}
+
+/* The throw happens over the board, then stays visible until the result is acknowledged. */
+.board-frame{position:relative}
+.throw-stage{position:absolute;inset:9px;z-index:8;display:grid;place-items:center;padding:12px;border-radius:13px;background:rgba(17,39,46,.36);backdrop-filter:blur(2px)}
+.throw-card{width:min(390px,86%);max-height:100%;display:flex;flex-direction:column;align-items:center;gap:10px;padding:clamp(14px,2vw,25px);border:1px solid #eeddb0;border-radius:24px;background:linear-gradient(160deg,#fffaf0,#fff 68%);box-shadow:0 24px 60px #10262b66;text-align:center}
+.throw-team-label{margin:0;color:#ca477e;font-size:12px;font-weight:900;letter-spacing:.08em}
+.throw-card h2{margin:0;color:var(--ink);font-size:clamp(20px,2.6vw,28px);font-weight:900;letter-spacing:-.06em}
+.throw-card .stick-tray{width:100%;height:clamp(92px,15vh,135px);flex:none;gap:clamp(10px,2vw,20px);overflow:hidden;border:1px solid #e4c990;background:radial-gradient(ellipse at center,#ead1a1 0,#cfae77 100%);box-shadow:inset 0 4px 13px #79572c3d}
+.throw-card .stick{height:clamp(68px,11vh,96px);width:clamp(27px,3.5vw,38px);border-radius:18px;box-shadow:inset -5px 0 #d4ab71,0 8px 9px #6b472966}
+.throw-card .stick span{height:25px}.throw-card .stick.back span{height:3px}
+.throw-card .roll-result{min-height:40px;color:#915a3a;font-size:13px;line-height:1.35}
+.throw-card .roll-result strong{font-size:clamp(30px,5vw,42px);color:#db3d7c;animation:result-pop .35s ease-out both}
+.throw-card .roll-button,.throw-card .continue-button{width:100%;min-height:48px;flex:none;border:0;border-radius:12px;background:#19323a;color:white;padding:0 16px;font-size:15px;font-weight:900}
+.throw-card .roll-button{display:flex;justify-content:space-between;align-items:center}.throw-card .roll-button span{color:#f3d970}
+.throw-card .continue-button{background:#e44280}
+.throw-cue{margin:2px 0 8px;color:#e7f1ed;font-size:12px;font-weight:800;text-align:center}
+.throw-stage.is-throwing .throw-card{animation:card-toss .6s ease-in-out both}
+.throw-stage.is-throwing .stick:nth-child(1){animation:stick-toss-a 1.05s cubic-bezier(.22,.8,.25,1) both}
+.throw-stage.is-throwing .stick:nth-child(2){animation:stick-toss-b 1.05s cubic-bezier(.22,.8,.25,1) both}
+.throw-stage.is-throwing .stick:nth-child(3){animation:stick-toss-c 1.05s cubic-bezier(.22,.8,.25,1) both}
+.throw-stage.is-throwing .stick:nth-child(4){animation:stick-toss-d 1.05s cubic-bezier(.22,.8,.25,1) both}
+@keyframes card-toss{45%{transform:scale(1.035)}100%{transform:scale(1)}}
+@keyframes stick-toss-a{0%{transform:translateY(35px) rotate(-18deg)}35%{transform:translate(-18px,-45px) rotate(-105deg)}70%{transform:translate(12px,4px) rotate(31deg)}100%{transform:rotate(-9deg)}}
+@keyframes stick-toss-b{0%{transform:translateY(35px) rotate(18deg)}40%{transform:translate(14px,-53px) rotate(145deg)}75%{transform:translate(-7px,5px) rotate(-24deg)}100%{transform:rotate(9deg)}}
+@keyframes stick-toss-c{0%{transform:translateY(35px) rotate(-18deg)}38%{transform:translate(6px,-41px) rotate(120deg)}72%{transform:translate(-15px,5px) rotate(20deg)}100%{transform:rotate(-9deg)}}
+@keyframes stick-toss-d{0%{transform:translateY(35px) rotate(18deg)}43%{transform:translate(-12px,-49px) rotate(-132deg)}73%{transform:translate(10px,6px) rotate(-18deg)}100%{transform:rotate(9deg)}}
+@keyframes result-pop{from{opacity:0;transform:scale(.65)}to{opacity:1;transform:scale(1)}}
+@media(max-width:900px){.throw-stage{inset:6px}.throw-card{width:min(370px,80%);gap:6px;padding:12px}.throw-card .stick-tray{height:clamp(65px,11vh,100px)}.throw-card .stick{height:clamp(48px,8vh,70px);width:27px}.throw-card .roll-result{min-height:32px}}
+@media(max-width:700px){.throw-card{width:min(300px,85%);padding:10px;gap:4px;border-radius:16px}.throw-card h2{font-size:20px}.throw-card .stick-tray{height:66px}.throw-card .stick{height:49px;width:23px}.throw-card .roll-result{min-height:24px;font-size:11px}.throw-card .roll-result strong{font-size:28px}.throw-card .roll-button,.throw-card .continue-button{min-height:40px;font-size:13px}}
+@media(prefers-reduced-motion:reduce){.throw-stage.is-throwing .throw-card,.throw-stage.is-throwing .stick,.throw-card .roll-result strong{animation:none!important}}

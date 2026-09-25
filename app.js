@@ -15,6 +15,8 @@ let cameraTeam = null;
 let cameraPiece = null;
 let rolling = false;
 let moving = false;
+let resultHold = false;
+let rolledTeam = 0;
 let motionEnabled = false;
 let lastShakePeak = 0;
 let lastMotionValue = 0;
@@ -155,6 +157,7 @@ function startGame() {
   unlockAudio();
   game = createGame();
   selectedPieceId = null;
+  resultHold = false;
   document.body.classList.add("playing");
   $("setupScreen").hidden = true;
   $("gameScreen").hidden = false;
@@ -168,6 +171,7 @@ function startGame() {
 function resetGame(keepPhotos) {
   if (moving || rolling) return;
   $("winnerModal").hidden = true;
+  resultHold = false;
   if (keepPhotos) {
     game = createGame();
     selectedPieceId = null;
@@ -238,7 +242,7 @@ function renderBoard() {
       button.style.top = position[1] + "%";
       button.style.setProperty("--piece-color", teamColors[teamIndex]);
       button.setAttribute("aria-label", teams[teamIndex].name + " 말 " + group.map(piece => piece.id + 1).join(", ") + "번");
-      const canSelect = game.phase === "select" && teamIndex === game.currentTeam && !moving;
+      const canSelect = game.phase === "select" && teamIndex === game.currentTeam && !moving && !resultHold;
       button.disabled = !canSelect;
       if (canSelect) button.classList.add("movable");
       const image = document.createElement("img");
@@ -272,29 +276,35 @@ function renderMarkers() {
 
 function renderSticks() {
   [...$("stickTray").children].forEach((stick, index) => {
-    stick.classList.toggle("back", Boolean(game.lastSticks && game.lastSticks[index]));
+    stick.classList.toggle("back", Boolean(resultHold && game.lastSticks && game.lastSticks[index]));
     stick.classList.toggle("marked", index === 0);
   });
   const result = $("rollResult");
   result.replaceChildren();
-  if (game.lastSticks) {
+  if (resultHold && game.lastSticks) {
     const strong = document.createElement("strong");
     strong.textContent = scoreSticks(game.lastSticks).name;
     result.append(strong);
-  } else result.textContent = "윷을 던져 주세요";
+  } else result.textContent = "아이패드를 흔들거나 버튼을 눌러 주세요";
 }
 
 function renderPhase() {
-  const phase = moving ? "move" : game.phase === "select" ? "select" : "roll";
+  const phase = moving ? "move" : game.phase === "won" ? "won" : resultHold ? "result" : game.phase === "select" ? "select" : "roll";
   $("gameScreen").dataset.step = phase;
-  $("rollPhase").hidden = phase !== "roll";
+  $("throwStage").hidden = phase !== "roll" && phase !== "result";
+  $("rollPhase").hidden = phase !== "roll" && phase !== "result";
   $("selectPhase").hidden = phase !== "select";
   $("movingPhase").hidden = phase !== "move";
-  $("stepRoll").classList.toggle("active", phase === "roll");
+  $("stepRoll").classList.toggle("active", phase === "roll" || phase === "result");
   $("stepSelect").classList.toggle("active", phase === "select");
   $("stepMove").classList.toggle("active", phase === "move");
   $("gameMessage").textContent = moving ? "말이 한 칸씩 이동하고 있어요." : game.message;
+  $("rollBtn").hidden = phase !== "roll";
   $("rollBtn").disabled = phase !== "roll" || rolling;
+  $("continueBtn").hidden = phase !== "result";
+  $("continueBtn").textContent = game.phase === "select" ? "말 고르기 →" : "다음 팀 던지기 →";
+  $("throwTeamLabel").textContent = teams[phase === "result" ? rolledTeam : game.currentTeam].name + " 차례";
+  $("throwTitle").textContent = phase === "result" ? "윷 결과" : "윷을 던져요";
 }
 
 function renderSelection() {
@@ -350,7 +360,7 @@ function renderSelection() {
 }
 
 function selectPiece(pieceId) {
-  if (!game || game.phase !== "select" || moving) return;
+  if (!game || game.phase !== "select" || moving || resultHold) return;
   const piece = game.pieces[game.currentTeam][pieceId];
   if (!movablePieces(game).some(candidate => candidate.id === pieceId)) return;
   if (game.pending.steps > 0 && routeChoices(piece).length) {
@@ -399,7 +409,7 @@ async function animateMove(move) {
 }
 
 async function completeMove(pieceId, choice = null) {
-  if (moving) return;
+  if (moving || resultHold) return;
   try {
     const next = movePiece(game, pieceId, choice);
     moving = true;
@@ -444,7 +454,7 @@ function renderScore() {
       token.classList.toggle("finished", piece.pos === FINISH);
       token.style.backgroundImage = 'url("' + photo(index, piece.id) + '")';
       token.setAttribute("aria-label", team.name + " " + (piece.id + 1) + "번 말: " + (piece.pos === FINISH ? "도착" : piece.pos === RESERVE ? "대기" : "이동 중"));
-      const canSelect = game.phase === "select" && index === game.currentTeam && piece.pos === RESERVE && game.pending.steps > 0 && !moving;
+      const canSelect = game.phase === "select" && index === game.currentTeam && piece.pos === RESERVE && game.pending.steps > 0 && !moving && !resultHold;
       token.disabled = !canSelect;
       if (canSelect) token.addEventListener("click", () => selectPiece(piece.id));
       pieces.append(token);
@@ -476,23 +486,25 @@ function randomSticks() {
 }
 
 async function throwYut() {
-  if (!game || game.phase !== "roll" || rolling || moving) return;
+  if (!game || game.phase !== "roll" || rolling || moving || resultHold) return;
   rolling = true;
+  rolledTeam = game.currentTeam;
   lastThrowAt = Date.now();
   playThrow();
   $("rollBtn").disabled = true;
-  $("stickTray").classList.add("rolling");
-  $("rollResult").textContent = "데구르르…";
-  await wait(650);
+  $("throwStage").classList.add("is-throwing");
+  $("rollResult").textContent = "윷이 날아갑니다…";
+  await wait(1100);
   game = takeRoll(game, randomSticks());
+  resultHold = true;
   rolling = false;
-  $("stickTray").classList.remove("rolling");
+  $("throwStage").classList.remove("is-throwing");
   selectedPieceId = null;
   render();
 }
 
 function onMotion(event) {
-  if (!game || game.phase !== "roll" || rolling || moving) return;
+  if (!game || game.phase !== "roll" || rolling || moving || resultHold) return;
   const acceleration = event.acceleration;
   const value = acceleration && acceleration.x != null
     ? Math.hypot(acceleration.x || 0, acceleration.y || 0, acceleration.z || 0)
@@ -550,6 +562,7 @@ $("startBtn").addEventListener("click", startGame);
 $("closeCameraBtn").addEventListener("click", closeCamera);
 $("captureBtn").addEventListener("click", capturePhoto);
 $("rollBtn").addEventListener("click", throwYut);
+$("continueBtn").addEventListener("click", () => { if (!resultHold) return; resultHold = false; render(); });
 $("motionBtn").addEventListener("click", enableMotion);
 $("soundBtn").addEventListener("click", toggleSound);
 $("playAgainBtn").addEventListener("click", () => resetGame(true));

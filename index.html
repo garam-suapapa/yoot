@@ -65,6 +65,18 @@
               <div id="portalMarkers" class="board-overlay"></div>
               <div id="boardPieces" class="board-overlay"></div>
             </div>
+            <div id="throwStage" class="throw-stage" role="group" aria-label="윷 던지기">
+              <div class="throw-card">
+                <p id="throwTeamLabel" class="throw-team-label">분홍팀 차례</p>
+                <h2 id="throwTitle">윷을 던져요</h2>
+                <div class="stick-tray" id="stickTray" aria-label="윷 4개">
+                  <div class="stick"><span></span></div><div class="stick"><span></span></div><div class="stick"><span></span></div><div class="stick"><span></span></div>
+                </div>
+                <div id="rollResult" class="roll-result" role="status" aria-live="polite">아이패드를 흔들거나 버튼을 눌러 주세요</div>
+                <button id="rollBtn" class="roll-button" type="button">윷 던지기 <span>✳</span></button>
+                <button id="continueBtn" class="continue-button" type="button" hidden>말 고르기 →</button>
+              </div>
+            </div>
           </div>
         </div>
         <aside class="game-sidebar">
@@ -82,11 +94,7 @@
             <p id="gameMessage" class="game-message" role="status"></p>
 
             <div id="rollPhase" class="phase-content">
-              <div class="stick-tray" id="stickTray" aria-label="마지막 윷 결과">
-                <div class="stick"><span></span></div><div class="stick"><span></span></div><div class="stick"><span></span></div><div class="stick"><span></span></div>
-              </div>
-              <div id="rollResult" class="roll-result">윷을 던져 주세요</div>
-              <button id="rollBtn" class="roll-button" type="button">윷 던지기 <span>✳</span></button>
+              <p class="throw-cue">말판 가운데에서 윷을 던져 주세요.</p>
               <button id="motionBtn" class="motion-button" type="button">흔들기 센서 켜기</button>
               <p id="motionStatus" class="sensor-note">센서를 허용하면 아이패드를 흔들어 던질 수 있어요.</p>
             </div>
