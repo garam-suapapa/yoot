@@ -134,3 +134,5 @@ body.playing main{flex:1;min-height:0;overflow:hidden}
 @media(max-width:900px){.throw-stage{inset:6px}.throw-card{width:min(370px,80%);gap:6px;padding:12px}.throw-card .stick-tray{height:clamp(65px,11vh,100px)}.throw-card .stick{height:clamp(48px,8vh,70px);width:27px}.throw-card .roll-result{min-height:32px}}
 @media(max-width:700px){.throw-card{width:min(300px,85%);padding:10px;gap:4px;border-radius:16px}.throw-card h2{font-size:20px}.throw-card .stick-tray{height:66px}.throw-card .stick{height:49px;width:23px}.throw-card .roll-result{min-height:24px;font-size:11px}.throw-card .roll-result strong{font-size:28px}.throw-card .roll-button,.throw-card .continue-button{min-height:40px;font-size:13px}}
 @media(prefers-reduced-motion:reduce){.throw-stage.is-throwing .throw-card,.throw-stage.is-throwing .stick,.throw-card .roll-result strong{animation:none!important}}
+
+.board-piece.goal-gate{box-shadow:0 2px 12px #0d272a75,0 0 0 4px #f0be45,0 0 0 8px #f0be4566}

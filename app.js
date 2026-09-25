@@ -236,12 +236,13 @@ function renderBoard() {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "board-piece";
+      button.classList.toggle("goal-gate", group[0].pos === "n0");
       button.dataset.team = teamIndex;
       button.dataset.pos = group[0].pos;
       button.style.left = position[0] + "%";
       button.style.top = position[1] + "%";
       button.style.setProperty("--piece-color", teamColors[teamIndex]);
-      button.setAttribute("aria-label", teams[teamIndex].name + " 말 " + group.map(piece => piece.id + 1).join(", ") + "번");
+      button.setAttribute("aria-label", teams[teamIndex].name + " 말 " + group.map(piece => piece.id + 1).join(", ") + "번" + (group[0].pos === "n0" ? ", 한 칸이면 도착" : ""));
       const canSelect = game.phase === "select" && teamIndex === game.currentTeam && !moving && !resultHold;
       button.disabled = !canSelect;
       if (canSelect) button.classList.add("movable");
@@ -329,7 +330,7 @@ function renderSelection() {
       const label = document.createElement("span");
       label.textContent = (piece.id + 1) + "번 말";
       const status = document.createElement("small");
-      status.textContent = piece.pos === RESERVE ? "새로 내보내기" : "말판에서 이동";
+      status.textContent = piece.pos === RESERVE ? "새로 내보내기" : piece.pos === "n0" ? "한 칸이면 도착" : "말판에서 이동";
       label.append(status);
       button.append(label);
       button.addEventListener("click", () => selectPiece(piece.id));
@@ -453,7 +454,7 @@ function renderScore() {
       token.className = "score-piece";
       token.classList.toggle("finished", piece.pos === FINISH);
       token.style.backgroundImage = 'url("' + photo(index, piece.id) + '")';
-      token.setAttribute("aria-label", team.name + " " + (piece.id + 1) + "번 말: " + (piece.pos === FINISH ? "도착" : piece.pos === RESERVE ? "대기" : "이동 중"));
+      token.setAttribute("aria-label", team.name + " " + (piece.id + 1) + "번 말: " + (piece.pos === FINISH ? "도착" : piece.pos === RESERVE ? "대기" : piece.pos === "n0" ? "한 칸이면 도착" : "이동 중"));
       const canSelect = game.phase === "select" && index === game.currentTeam && piece.pos === RESERVE && game.pending.steps > 0 && !moving && !resultHold;
       token.disabled = !canSelect;
       if (canSelect) token.addEventListener("click", () => selectPiece(piece.id));

@@ -106,3 +106,24 @@ test("movement metadata preserves each tile and the arrow jump for animation", (
   assert.equal(captured.lastMove.captured, 1);
   assert.equal(captured.lastMove.extra, true);
 });
+
+test("do then backdo leaves a piece at the start gate until the next forward roll scores it", () => {
+  let game = movePiece(takeRoll(createGame(), DO), 0);
+  game = movePiece(takeRoll(game, GAE), 0);
+  game = movePiece(takeRoll(game, BACKDO), 0);
+  assert.equal(game.pieces[0][0].pos, "n0");
+  assert.deepEqual(game.lastMove.trail, ["n0"]);
+  assert.equal(game.pieces[0][0].history.length, 0);
+  game = movePiece(takeRoll(game, DO), 0);
+  game = movePiece(takeRoll(game, DO), 0);
+  assert.equal(game.pieces[0][0].pos, FINISH);
+  assert.deepEqual(game.lastMove.trail, [FINISH]);
+});
+
+test("backdo cannot select a piece already waiting at the start gate", () => {
+  const game = createGame();
+  game.pieces[0][0].pos = "n0";
+  const skipped = takeRoll(game, BACKDO);
+  assert.equal(skipped.phase, "roll");
+  assert.equal(skipped.currentTeam, 1);
+});

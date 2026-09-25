@@ -2,6 +2,7 @@ export const FINISH = "finish";
 export const RESERVE = "reserve";
 
 export const NODES = {
+  n0: [86.7, 91.2],
   n1: [86.7, 73.5], n2: [86.7, 58.2], n3: [86.7, 42.7], n4: [86.7, 27.4],
   n5: [86.7, 9.3], n6: [70.3, 9.3], n7: [56.1, 9.3], n8: [42.1, 9.3],
   n9: [28.1, 9.3], n10: [12.7, 9.3], n11: [12.7, 27.4], n12: [12.7, 42.7],
@@ -57,7 +58,7 @@ export function scoreSticks(sticks) {
 export function movablePieces(state) {
   if (state.phase !== "select") return [];
   return state.pieces[state.currentTeam].filter(piece =>
-    piece.pos !== FINISH && (state.pending.steps !== -1 || piece.pos !== RESERVE)
+    piece.pos !== FINISH && (state.pending.steps !== -1 || (piece.pos !== RESERVE && piece.pos !== "n0"))
   );
 }
 
@@ -70,6 +71,7 @@ export function routeChoices(piece) {
 function nextPosition(piece, choice, first) {
   const pos = piece.pos;
   if (pos === RESERVE) return ["n1", "outer"];
+  if (pos === "n0") return [FINISH, "outer"];
   if (pos === "n5" && first && choice === "shortcut") return ["a1", "a"];
   if (pos === "n10" && first && choice === "shortcut") return ["b1", "b"];
   if (pos === "c") {
@@ -126,7 +128,7 @@ export function movePiece(state, pieceId, choice = null) {
   if (steps === -1) {
     const previous = piece.history.pop();
     if (!previous) throw new Error("빽도로 돌아갈 칸이 없습니다.");
-    piece.pos = previous.pos;
+    piece.pos = previous.pos === RESERVE ? "n0" : previous.pos;
     piece.lane = previous.lane;
     trail.push(piece.pos);
   } else {
@@ -185,6 +187,7 @@ export function movePiece(state, pieceId, choice = null) {
     next.turn += 1;
     next.message = "다음 팀 차례입니다. 아이패드를 흔들어 주세요.";
   }
+  if (piece.pos === "n0" && !extra) next.message = "출발 칸에 걸렸어요. 앞으로 한 칸이면 도착합니다. 다음 팀 차례입니다.";
   if (portalLabel && !finished) next.message = `${portalLabel} 발동! ${next.message}`;
   return next;
 }
