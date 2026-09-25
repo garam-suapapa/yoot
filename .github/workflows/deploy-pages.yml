@@ -32,8 +32,8 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p _site/assets
-          cp index.html app.js game.js style.css _site/
-          cp assets/board-reference.png _site/assets/
+          cp index.html app.js game.js sound.js style.css _site/
+          cp assets/board.svg _site/assets/
           touch _site/.nojekyll
       - name: Configure Pages
         uses: actions/configure-pages@v5

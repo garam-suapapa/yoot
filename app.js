@@ -1,17 +1,25 @@
 import { createGame, movePiece, movablePieces, NODES, PORTALS, RESERVE, FINISH, routeChoices, scoreSticks, takeRoll } from "./game.js";
+import { unlockAudio, setSoundEnabled, isSoundEnabled, playThrow, playStep, playPortal, playCaptureBonus } from "./sound.js";
 
 const $ = id => document.getElementById(id);
 const teamColors = ["#e44280", "#168c87"];
-const teams = [{ name: "분홍팀", photo: null }, { name: "청록팀", photo: null }];
+const teams = [
+  { name: "분홍팀", photos: [null, null, null, null] },
+  { name: "청록팀", photos: [null, null, null, null] }
+];
+const selectedPhoto = [0, 0];
 let game = null;
 let selectedPieceId = null;
 let cameraStream = null;
 let cameraTeam = null;
+let cameraPiece = null;
 let rolling = false;
+let moving = false;
 let motionEnabled = false;
 let lastShakePeak = 0;
 let lastMotionValue = 0;
 let lastThrowAt = 0;
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function setNotice(message, error = false) {
   $("setupNotice").textContent = message;
@@ -19,24 +27,48 @@ function setNotice(message, error = false) {
 }
 
 function refreshSetup() {
-  teams.forEach((team, index) => {
-    const preview = $(`preview${index}`);
-    preview.replaceChildren();
-    if (team.photo) {
-      const image = document.createElement("img");
-      image.src = team.photo;
-      image.alt = `${team.name} 말 사진`;
-      preview.append(image);
-    } else {
-      const label = document.createElement("span");
-      label.innerHTML = "사진을 찍어<br>말 만들기";
-      preview.append(label);
-    }
+  teams.forEach((team, teamIndex) => {
+    const grid = $("photos" + teamIndex);
+    grid.replaceChildren();
+    team.photos.forEach((photo, pieceIndex) => {
+      const slot = document.createElement("button");
+      slot.type = "button";
+      slot.className = "photo-slot";
+      slot.classList.toggle("selected", selectedPhoto[teamIndex] === pieceIndex);
+      slot.classList.toggle("ready", Boolean(photo));
+      slot.setAttribute("aria-label", team.name + " " + (pieceIndex + 1) + "번 말 사진 " + (photo ? "완료" : "필요"));
+      if (photo) {
+        const image = document.createElement("img");
+        image.src = photo;
+        image.alt = "";
+        slot.append(image);
+      } else {
+        const number = document.createElement("span");
+        number.textContent = pieceIndex + 1;
+        slot.append(number);
+      }
+      const badge = document.createElement("small");
+      badge.textContent = pieceIndex + 1;
+      slot.append(badge);
+      slot.addEventListener("click", () => {
+        selectedPhoto[teamIndex] = pieceIndex;
+        refreshSetup();
+      });
+      grid.append(slot);
+    });
+    $("selectedLabel" + teamIndex).textContent = (selectedPhoto[teamIndex] + 1) + "번 말 사진" + (team.photos[selectedPhoto[teamIndex]] ? " 다시 찍기" : " 찍기");
   });
-  const ready = teams.every(team => team.photo);
-  $("startBtn").disabled = !ready;
-  $("startBtn").firstChild.textContent = ready ? "게임 시작하기 " : "사진 2장 준비 후 게임 시작 ";
-  if (ready) setNotice("사진 준비 완료! 두 팀 모두 동그란 말 4개씩 생깁니다.");
+  const count = teams.flatMap(team => team.photos).filter(Boolean).length;
+  $("photoCount").textContent = count + " / 8장";
+  $("startBtn").disabled = count !== 8;
+  $("startText").textContent = count === 8 ? "게임 시작하기" : "사진 " + count + "/8장 준비";
+  if (count === 8) setNotice("여덟 말의 사진이 모두 준비됐어요!");
+  else setNotice("각 팀 말 4개에 서로 다른 사진을 넣어 주세요.");
+}
+
+function advancePhoto(teamIndex) {
+  const next = teams[teamIndex].photos.findIndex(photo => !photo);
+  if (next !== -1) selectedPhoto[teamIndex] = next;
 }
 
 function squarePhoto(source, width, height, mirror = false) {
@@ -44,46 +76,57 @@ function squarePhoto(source, width, height, mirror = false) {
   canvas.width = canvas.height = 360;
   const context = canvas.getContext("2d");
   const side = Math.min(width, height);
-  const sx = (width - side) / 2;
-  const sy = (height - side) / 2;
   if (mirror) { context.translate(360, 0); context.scale(-1, 1); }
-  context.drawImage(source, sx, sy, side, side, 0, 0, 360, 360);
+  context.drawImage(source, (width - side) / 2, (height - side) / 2, side, side, 0, 0, 360, 360);
   return canvas.toDataURL("image/jpeg", 0.86);
 }
 
-async function loadPhotoFile(index, file) {
-  $(`file${index}`).removeAttribute("capture");
-  if (!file || !file.type.startsWith("image/")) { setNotice("이미지 파일을 선택해 주세요.", true); return; }
+async function loadPhotoFile(teamIndex, file) {
+  const pieceIndex = selectedPhoto[teamIndex];
+  $("file" + teamIndex).removeAttribute("capture");
+  if (!file || !file.type.startsWith("image/")) {
+    if (file) setNotice("이미지 파일을 선택해 주세요.", true);
+    return;
+  }
   const url = URL.createObjectURL(file);
   try {
     const image = new Image();
-    image.src = url;
-    await image.decode();
-    teams[index].photo = squarePhoto(image, image.naturalWidth, image.naturalHeight);
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = reject;
+      image.src = url;
+    });
+    teams[teamIndex].photos[pieceIndex] = squarePhoto(image, image.naturalWidth, image.naturalHeight);
+    advancePhoto(teamIndex);
     refreshSetup();
   } catch {
     setNotice("사진을 읽지 못했습니다. 다른 사진을 선택해 주세요.", true);
   } finally {
     URL.revokeObjectURL(url);
+    $("file" + teamIndex).value = "";
   }
 }
 
-async function openCamera(index) {
-  cameraTeam = index;
-  if (!navigator.mediaDevices?.getUserMedia) {
-    setNotice("이 주소에서는 카메라를 열 수 없습니다. 사진 선택으로 촬영해 주세요.", true);
-    $(`file${index}`).setAttribute("capture", "user");
-    $(`file${index}`).click();
+async function openCamera(teamIndex) {
+  cameraTeam = teamIndex;
+  cameraPiece = selectedPhoto[teamIndex];
+  $("cameraTitle").textContent = teams[teamIndex].name + " · " + (cameraPiece + 1) + "번 말 사진";
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    $("file" + teamIndex).setAttribute("capture", "user");
+    $("file" + teamIndex).click();
     return;
   }
   try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 1280 } } });
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 1280 } }
+    });
     $("cameraVideo").srcObject = cameraStream;
     $("cameraModal").hidden = false;
     await $("cameraVideo").play();
   } catch {
     closeCamera();
-    setNotice("카메라 접근이 안 됩니다. 사진 선택 버튼을 눌러 촬영하거나 사진을 고르세요.", true);
+    setNotice("카메라 접근이 안 됩니다. 사진 선택에서 촬영하거나 사진을 골라 주세요.", true);
   }
 }
 
@@ -96,45 +139,53 @@ function closeCamera() {
 
 function capturePhoto() {
   const video = $("cameraVideo");
-  if (cameraTeam === null || !video.videoWidth) return;
-  teams[cameraTeam].photo = squarePhoto(video, video.videoWidth, video.videoHeight, true);
+  if (cameraTeam === null || cameraPiece === null || !video.videoWidth) return;
+  teams[cameraTeam].photos[cameraPiece] = squarePhoto(video, video.videoWidth, video.videoHeight, true);
+  const teamIndex = cameraTeam;
   closeCamera();
+  advancePhoto(teamIndex);
   refreshSetup();
 }
 
 function startGame() {
-  if (!teams.every(team => team.photo)) return;
-  teams.forEach((team, index) => { team.name = $(`name${index}`).value.trim() || (index ? "청록팀" : "분홍팀"); });
+  if (teams.some(team => team.photos.some(photo => !photo))) return;
+  teams.forEach((team, index) => {
+    team.name = $("name" + index).value.trim() || (index ? "청록팀" : "분홍팀");
+  });
+  unlockAudio();
   game = createGame();
   selectedPieceId = null;
+  document.body.classList.add("playing");
   $("setupScreen").hidden = true;
   $("gameScreen").hidden = false;
   $("newGameBtn").hidden = false;
   $("winnerModal").hidden = true;
   render();
-  window.scrollTo({ top: 0, behavior: "auto" });
+  requestAnimationFrame(sizeBoard);
+  window.scrollTo(0, 0);
 }
 
 function resetGame(keepPhotos) {
+  if (moving || rolling) return;
   $("winnerModal").hidden = true;
   if (keepPhotos) {
     game = createGame();
     selectedPieceId = null;
     render();
-  } else {
-    game = null;
-    teams.forEach((team, index) => { team.photo = null; $(`file${index}`).value = ""; });
-    $("gameScreen").hidden = true;
-    $("setupScreen").hidden = false;
-    $("newGameBtn").hidden = true;
-    refreshSetup();
-    setNotice("두 팀의 사진을 준비해 주세요.");
+    return;
   }
-}
-
-function pieceLabel(piece) {
-  if (piece.pos === RESERVE) return `대기 말 ${piece.id + 1}`;
-  return `말 ${piece.id + 1}`;
+  game = null;
+  teams.forEach((team, index) => {
+    team.photos = [null, null, null, null];
+    selectedPhoto[index] = 0;
+    $("file" + index).value = "";
+  });
+  document.body.classList.remove("playing");
+  $("gameScreen").hidden = true;
+  $("setupScreen").hidden = false;
+  $("newGameBtn").hidden = true;
+  refreshSetup();
+  window.scrollTo(0, 0);
 }
 
 function groupedPieces(teamIndex) {
@@ -147,12 +198,28 @@ function groupedPieces(teamIndex) {
   return [...groups.values()];
 }
 
-function makeAvatar(className, teamIndex) {
+function photo(teamIndex, pieceId = 0) {
+  return teams[teamIndex].photos[pieceId];
+}
+
+function makeAvatar(className, teamIndex, pieceId = 0) {
   const element = document.createElement("div");
   element.className = className;
   element.style.setProperty("--piece-color", teamColors[teamIndex]);
-  element.style.backgroundImage = `url("${teams[teamIndex].photo}")`;
+  element.style.backgroundImage = 'url("' + photo(teamIndex, pieceId) + '")';
   return element;
+}
+
+function sizeBoard() {
+  const frame = document.querySelector(".board-frame");
+  const board = $("board");
+  if (!frame || frame.clientWidth === 0 || frame.clientHeight === 0) return;
+  const style = getComputedStyle(frame);
+  const width = frame.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+  const height = frame.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+  const scale = Math.max(0, Math.min(width / 527, height / 483));
+  board.style.width = Math.floor(527 * scale) + "px";
+  board.style.height = Math.floor(483 * scale) + "px";
 }
 
 function renderBoard() {
@@ -165,15 +232,17 @@ function renderBoard() {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "board-piece";
-      button.style.left = `${position[0]}%`;
-      button.style.top = `${position[1]}%`;
+      button.dataset.team = teamIndex;
+      button.dataset.pos = group[0].pos;
+      button.style.left = position[0] + "%";
+      button.style.top = position[1] + "%";
       button.style.setProperty("--piece-color", teamColors[teamIndex]);
-      button.setAttribute("aria-label", `${teams[teamIndex].name} 말 ${group.length}개`);
-      const canSelect = game.phase === "select" && teamIndex === game.currentTeam;
+      button.setAttribute("aria-label", teams[teamIndex].name + " 말 " + group.map(piece => piece.id + 1).join(", ") + "번");
+      const canSelect = game.phase === "select" && teamIndex === game.currentTeam && !moving;
       button.disabled = !canSelect;
       if (canSelect) button.classList.add("movable");
       const image = document.createElement("img");
-      image.src = teams[teamIndex].photo;
+      image.src = photo(teamIndex, group[0].id);
       image.alt = "";
       button.append(image);
       if (group.length > 1) {
@@ -193,19 +262,17 @@ function renderMarkers() {
   layer.replaceChildren();
   for (const [node, portal] of Object.entries(PORTALS)) {
     const marker = document.createElement("span");
-    marker.className = `portal-marker ${node === "n8" ? "shortcut" : "return"}`;
-    marker.style.left = `${NODES[node][0]}%`;
-    marker.style.top = `${NODES[node][1]}%`;
-    marker.title = `${portal.label}: 이 칸에 도착하면 화살표 끝으로 이동`;
-    marker.setAttribute("aria-label", marker.title);
+    marker.className = "portal-marker " + (node === "n8" ? "shortcut" : "return");
+    marker.style.left = NODES[node][0] + "%";
+    marker.style.top = NODES[node][1] + "%";
+    marker.title = portal.label + ": 이 칸에 도착하면 화살표 끝으로 이동";
     layer.append(marker);
   }
 }
 
 function renderSticks() {
-  const sticks = $("stickTray").children;
-  [...sticks].forEach((stick, index) => {
-    stick.classList.toggle("back", !!game.lastSticks?.[index]);
+  [...$("stickTray").children].forEach((stick, index) => {
+    stick.classList.toggle("back", Boolean(game.lastSticks && game.lastSticks[index]));
     stick.classList.toggle("marked", index === 0);
   });
   const result = $("rollResult");
@@ -217,56 +284,52 @@ function renderSticks() {
   } else result.textContent = "윷을 던져 주세요";
 }
 
-function selectPiece(pieceId) {
-  if (game.phase !== "select") return;
-  const piece = game.pieces[game.currentTeam][pieceId];
-  if (!movablePieces(game).some(candidate => candidate.id === pieceId)) return;
-  const choices = game.pending.steps > 0 ? routeChoices(piece) : [];
-  if (choices.length === 0) {
-    completeMove(pieceId);
-    return;
-  }
-  selectedPieceId = pieceId;
-  renderSelection();
-}
-
-function completeMove(pieceId, choice = null) {
-  try {
-    game = movePiece(game, pieceId, choice);
-    selectedPieceId = null;
-    render();
-    if (game.phase === "won") $("winnerModal").hidden = false;
-  } catch (error) {
-    $("gameMessage").textContent = error.message;
-  }
+function renderPhase() {
+  const phase = moving ? "move" : game.phase === "select" ? "select" : "roll";
+  $("gameScreen").dataset.step = phase;
+  $("rollPhase").hidden = phase !== "roll";
+  $("selectPhase").hidden = phase !== "select";
+  $("movingPhase").hidden = phase !== "move";
+  $("stepRoll").classList.toggle("active", phase === "roll");
+  $("stepSelect").classList.toggle("active", phase === "select");
+  $("stepMove").classList.toggle("active", phase === "move");
+  $("gameMessage").textContent = moving ? "말이 한 칸씩 이동하고 있어요." : game.message;
+  $("rollBtn").disabled = phase !== "roll" || rolling;
 }
 
 function renderSelection() {
-  const card = $("selectionCard");
-  card.hidden = game.phase !== "select";
-  if (card.hidden) return;
-  $("movePrompt").textContent = `${game.pending.name} · ${game.pending.steps === -1 ? "한 칸 뒤로" : `${game.pending.steps}칸 앞으로`}`;
   const list = $("candidateList");
   list.replaceChildren();
-  const shown = new Set();
-  for (const piece of movablePieces(game)) {
-    if (piece.pos !== RESERVE && shown.has(piece.pos)) continue;
-    shown.add(piece.pos);
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `candidate-button ${selectedPieceId === piece.id ? "selected" : ""}`;
-    const count = piece.pos === RESERVE ? 1 : game.pieces[game.currentTeam].filter(member => member.pos === piece.pos).length;
-    button.textContent = `${pieceLabel(piece)}${count > 1 ? ` ×${count}` : ""}`;
-    button.addEventListener("click", () => selectPiece(piece.id));
-    list.append(button);
-  }
   const panel = $("routePanel");
   panel.replaceChildren();
   panel.hidden = selectedPieceId === null;
-  if (selectedPieceId === null) return;
+  list.hidden = selectedPieceId !== null;
+  if (game.phase !== "select") return;
+  $("moveResult").textContent = game.pending.name;
+  $("movePrompt").textContent = game.pending.steps === -1 ? "한 칸 뒤로 갈 말을 고르세요" : game.pending.steps + "칸 움직일 말을 고르세요";
+  if (selectedPieceId === null) {
+    for (const piece of movablePieces(game)) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "candidate-button";
+      const image = document.createElement("img");
+      image.src = photo(game.currentTeam, piece.id);
+      image.alt = "";
+      button.append(image);
+      const label = document.createElement("span");
+      label.textContent = (piece.id + 1) + "번 말";
+      const status = document.createElement("small");
+      status.textContent = piece.pos === RESERVE ? "새로 내보내기" : "말판에서 이동";
+      label.append(status);
+      button.append(label);
+      button.addEventListener("click", () => selectPiece(piece.id));
+      list.append(button);
+    }
+    return;
+  }
   const piece = game.pieces[game.currentTeam][selectedPieceId];
   const prompt = document.createElement("p");
-  prompt.textContent = piece.pos === "c" ? "중앙에서 어느 쪽으로 갈까요?" : "모서리에서 어느 길로 갈까요?";
+  prompt.textContent = (piece.id + 1) + "번 말 · " + (piece.pos === "c" ? "중앙에서 어느 쪽으로 갈까요?" : "모서리에서 어느 길로 갈까요?");
   panel.append(prompt);
   const options = document.createElement("div");
   options.className = "route-options";
@@ -278,6 +341,81 @@ function renderSelection() {
     options.append(button);
   }
   panel.append(options);
+  const back = document.createElement("button");
+  back.type = "button";
+  back.className = "route-back";
+  back.textContent = "다른 말 고르기";
+  back.addEventListener("click", () => { selectedPieceId = null; renderSelection(); });
+  panel.append(back);
+}
+
+function selectPiece(pieceId) {
+  if (!game || game.phase !== "select" || moving) return;
+  const piece = game.pieces[game.currentTeam][pieceId];
+  if (!movablePieces(game).some(candidate => candidate.id === pieceId)) return;
+  if (game.pending.steps > 0 && routeChoices(piece).length) {
+    selectedPieceId = pieceId;
+    renderSelection();
+  } else completeMove(pieceId);
+}
+
+async function animateMove(move) {
+  const layer = $("boardPieces");
+  const existing = [...layer.querySelectorAll(".board-piece")].find(element => Number(element.dataset.team) === move.team && element.dataset.pos === move.from);
+  const token = existing ? existing.cloneNode(true) : document.createElement("button");
+  if (existing) existing.style.visibility = "hidden";
+  else {
+    token.type = "button";
+    token.className = "board-piece";
+    token.style.setProperty("--piece-color", teamColors[move.team]);
+    const image = document.createElement("img");
+    image.src = photo(move.team, move.pieceIds[0]);
+    image.alt = "";
+    token.append(image);
+    token.style.left = "86.7%";
+    token.style.top = "91.2%";
+  }
+  token.disabled = true;
+  token.classList.remove("movable");
+  token.classList.add("traveling");
+  layer.append(token);
+  await new Promise(resolve => requestAnimationFrame(resolve));
+  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  for (let index = 0; index < move.trail.length; index += 1) {
+    const node = move.trail[index];
+    const [x, y] = NODES[node] || [86.7, 91.2];
+    token.style.left = x + "%";
+    token.style.top = y + "%";
+    $("movingCount").textContent = (index + 1) + " / " + move.trail.length + "칸";
+    await wait(reduced ? 45 : 290);
+    if (move.portal && index === move.trail.length - 1) playPortal();
+    else playStep(index);
+  }
+  if (move.captured > 0) {
+    $("gameMessage").textContent = "상대 말을 잡았어요!";
+    playCaptureBonus();
+    await wait(reduced ? 180 : 550);
+  }
+}
+
+async function completeMove(pieceId, choice = null) {
+  if (moving) return;
+  try {
+    const next = movePiece(game, pieceId, choice);
+    moving = true;
+    renderPhase();
+    await animateMove(next.lastMove);
+    game = next;
+    moving = false;
+    selectedPieceId = null;
+    render();
+    if (game.phase === "won") $("winnerModal").hidden = false;
+  } catch (error) {
+    moving = false;
+    selectedPieceId = null;
+    if (game) game.message = error.message;
+    render();
+  }
 }
 
 function renderScore() {
@@ -289,16 +427,24 @@ function renderScore() {
     row.className = "score-row";
     row.style.setProperty("--piece-color", teamColors[index]);
     row.append(makeAvatar("score-avatar", index));
-    const name = document.createElement("span"); name.className = "score-name"; name.textContent = team.name; row.append(name);
-    const progress = document.createElement("span"); progress.className = "score-progress"; progress.textContent = `${finished}/4`; row.append(progress);
-    const pieces = document.createElement("div"); pieces.className = "score-pieces";
+    const name = document.createElement("span");
+    name.className = "score-name";
+    name.textContent = team.name;
+    row.append(name);
+    const progress = document.createElement("span");
+    progress.className = "score-progress";
+    progress.textContent = finished + "/4";
+    row.append(progress);
+    const pieces = document.createElement("div");
+    pieces.className = "score-pieces";
     game.pieces[index].forEach(piece => {
       const token = document.createElement("button");
       token.type = "button";
-      token.className = `score-piece ${piece.pos === FINISH ? "finished" : ""}`;
-      token.style.backgroundImage = `url("${team.photo}")`;
-      token.setAttribute("aria-label", `${team.name} ${piece.id + 1}번 말: ${piece.pos === FINISH ? "도착" : piece.pos === RESERVE ? "대기" : "이동 중"}`);
-      const canSelect = game.phase === "select" && index === game.currentTeam && piece.pos === RESERVE && game.pending.steps > 0;
+      token.className = "score-piece";
+      token.classList.toggle("finished", piece.pos === FINISH);
+      token.style.backgroundImage = 'url("' + photo(index, piece.id) + '")';
+      token.setAttribute("aria-label", team.name + " " + (piece.id + 1) + "번 말: " + (piece.pos === FINISH ? "도착" : piece.pos === RESERVE ? "대기" : "이동 중"));
+      const canSelect = game.phase === "select" && index === game.currentTeam && piece.pos === RESERVE && game.pending.steps > 0 && !moving;
       token.disabled = !canSelect;
       if (canSelect) token.addEventListener("click", () => selectPiece(piece.id));
       pieces.append(token);
@@ -312,30 +458,32 @@ function render() {
   if (!game) return;
   $("turnNumber").textContent = String(game.turn).padStart(2, "0");
   $("currentTeamName").textContent = teams[game.currentTeam].name;
-  $("currentAvatar").style.backgroundImage = `url("${teams[game.currentTeam].photo}")`;
+  $("currentAvatar").style.backgroundImage = 'url("' + photo(game.currentTeam) + '")';
   $("currentAvatar").style.borderColor = teamColors[game.currentTeam];
-  $("gameMessage").textContent = game.message;
-  $("rollBtn").disabled = game.phase !== "roll" || rolling;
-  $("rollBtn").firstChild.textContent = game.phase === "select" ? "말을 선택해 주세요 " : "윷 던지기 ";
-  renderSticks(); renderBoard(); renderSelection(); renderScore();
-  if (game.phase === "won") $("winnerTitle").textContent = `${teams[game.winner].name} 승리!`;
+  renderSticks();
+  renderPhase();
+  renderSelection();
+  renderBoard();
+  renderScore();
+  if (game.phase === "won") $("winnerTitle").textContent = teams[game.winner].name + " 승리!";
 }
 
 function randomSticks() {
   const bytes = new Uint8Array(4);
-  if (globalThis.crypto?.getRandomValues) crypto.getRandomValues(bytes);
+  if (globalThis.crypto && crypto.getRandomValues) crypto.getRandomValues(bytes);
   else for (let i = 0; i < 4; i += 1) bytes[i] = Math.floor(Math.random() * 256);
   return [...bytes].map(value => value % 2 === 0);
 }
 
 async function throwYut() {
-  if (!game || game.phase !== "roll" || rolling) return;
+  if (!game || game.phase !== "roll" || rolling || moving) return;
   rolling = true;
   lastThrowAt = Date.now();
+  playThrow();
   $("rollBtn").disabled = true;
   $("stickTray").classList.add("rolling");
   $("rollResult").textContent = "데구르르…";
-  await new Promise(resolve => setTimeout(resolve, 650));
+  await wait(650);
   game = takeRoll(game, randomSticks());
   rolling = false;
   $("stickTray").classList.remove("rolling");
@@ -344,9 +492,10 @@ async function throwYut() {
 }
 
 function onMotion(event) {
-  if (!game || game.phase !== "roll" || rolling) return;
+  if (!game || game.phase !== "roll" || rolling || moving) return;
   const acceleration = event.acceleration;
-  const value = acceleration?.x != null ? Math.hypot(acceleration.x || 0, acceleration.y || 0, acceleration.z || 0)
+  const value = acceleration && acceleration.x != null
+    ? Math.hypot(acceleration.x || 0, acceleration.y || 0, acceleration.z || 0)
     : Math.abs(Math.hypot(event.accelerationIncludingGravity?.x || 0, event.accelerationIncludingGravity?.y || 0, event.accelerationIncludingGravity?.z || 0) - 9.8);
   const now = Date.now();
   if (now - lastThrowAt < 1800 || value < 12 || lastMotionValue >= 12) { lastMotionValue = value; return; }
@@ -359,7 +508,10 @@ function onMotion(event) {
 
 async function enableMotion() {
   if (motionEnabled) return;
-  if (!("DeviceMotionEvent" in window)) { $("motionStatus").textContent = "이 기기에는 흔들기 센서가 없습니다. 윷 던지기 버튼을 사용하세요."; return; }
+  if (!("DeviceMotionEvent" in window)) {
+    $("motionStatus").textContent = "이 기기에는 흔들기 센서가 없습니다. 버튼으로 던져 주세요.";
+    return;
+  }
   try {
     let permission = "granted";
     if (typeof DeviceMotionEvent.requestPermission === "function") permission = await DeviceMotionEvent.requestPermission();
@@ -368,29 +520,42 @@ async function enableMotion() {
     motionEnabled = true;
     $("motionBtn").classList.add("active");
     $("motionBtn").textContent = "흔들기 센서 켜짐 ✓";
-    $("motionStatus").textContent = "아이패드를 짧게 두 번 흔들면 윷이 던져집니다.";
+    $("motionStatus").textContent = "아이패드를 짧게 두 번 흔들면 윷을 던집니다.";
+    unlockAudio();
   } catch {
-    $("motionStatus").textContent = "흔들기 권한을 받지 못했습니다. 윷 던지기 버튼을 사용하세요.";
+    $("motionStatus").textContent = "흔들기 권한을 받지 못했습니다. 버튼으로 던져 주세요.";
   }
+}
+
+function toggleSound() {
+  setSoundEnabled(!isSoundEnabled());
+  const enabled = isSoundEnabled();
+  $("soundBtn").textContent = enabled ? "♪" : "×";
+  $("soundBtn").classList.toggle("muted", !enabled);
+  $("soundBtn").setAttribute("aria-pressed", String(enabled));
+  $("soundBtn").setAttribute("aria-label", enabled ? "소리 끄기" : "소리 켜기");
 }
 
 document.querySelectorAll("[data-camera]").forEach(button => button.addEventListener("click", () => openCamera(Number(button.dataset.camera))));
 document.querySelectorAll("[data-upload]").forEach(button => button.addEventListener("click", () => {
-  const input = $(`file${button.dataset.upload}`);
+  const input = $("file" + button.dataset.upload);
   input.removeAttribute("capture");
   input.click();
 }));
 [0, 1].forEach(index => {
-  $(`file${index}`).addEventListener("change", event => loadPhotoFile(index, event.target.files?.[0]));
-  $(`name${index}`).addEventListener("input", event => { teams[index].name = event.target.value.trim() || (index ? "청록팀" : "분홍팀"); });
+  $("file" + index).addEventListener("change", event => loadPhotoFile(index, event.target.files && event.target.files[0]));
+  $("name" + index).addEventListener("input", event => { teams[index].name = event.target.value.trim() || (index ? "청록팀" : "분홍팀"); });
 });
 $("startBtn").addEventListener("click", startGame);
 $("closeCameraBtn").addEventListener("click", closeCamera);
 $("captureBtn").addEventListener("click", capturePhoto);
 $("rollBtn").addEventListener("click", throwYut);
 $("motionBtn").addEventListener("click", enableMotion);
+$("soundBtn").addEventListener("click", toggleSound);
 $("playAgainBtn").addEventListener("click", () => resetGame(true));
 $("newPhotosBtn").addEventListener("click", () => resetGame(false));
 $("newGameBtn").addEventListener("click", () => resetGame(false));
 renderMarkers();
+if ("ResizeObserver" in window) new ResizeObserver(sizeBoard).observe(document.querySelector(".board-frame"));
+window.addEventListener("resize", sizeBoard);
 refreshSetup();

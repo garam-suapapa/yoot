@@ -36,6 +36,7 @@ export function createGame() {
     pieces: [0, 1].map(() => Array.from({ length: 4 }, (_, id) => ({ id, pos: RESERVE, lane: "outer", history: [] }))),
     pending: null,
     lastSticks: null,
+    lastMove: null,
     winner: null,
     turn: 1,
     message: "첫 번째 팀이 아이패드를 흔들어 윷을 던지세요."
@@ -119,12 +120,15 @@ export function movePiece(state, pieceId, choice = null) {
   if (choices.length && next.pending.steps > 0 && !choices.includes(choice)) throw new Error("갈림길 방향을 선택하세요.");
   const moving = piece.pos === RESERVE ? [piece] : team.filter(member => member.pos === piece.pos);
   const steps = next.pending.steps;
+  const from = piece.pos;
+  const trail = [];
   let portalLabel = "";
   if (steps === -1) {
     const previous = piece.history.pop();
     if (!previous) throw new Error("빽도로 돌아갈 칸이 없습니다.");
     piece.pos = previous.pos;
     piece.lane = previous.lane;
+    trail.push(piece.pos);
   } else {
     for (let i = 0; i < steps && piece.pos !== FINISH; i += 1) {
       const before = { pos: piece.pos, lane: piece.lane };
@@ -132,12 +136,14 @@ export function movePiece(state, pieceId, choice = null) {
       piece.history.push(before);
       piece.pos = pos;
       piece.lane = lane;
+      trail.push(piece.pos);
     }
     const portal = PORTALS[piece.pos];
     if (portal) {
       piece.history.push({ pos: piece.pos, lane: piece.lane });
       piece.pos = portal.to;
       piece.lane = portal.lane;
+      trail.push(piece.pos);
       portalLabel = portal.label;
     }
   }
@@ -164,6 +170,7 @@ export function movePiece(state, pieceId, choice = null) {
 
   const finished = team.every(member => member.pos === FINISH);
   const extra = steps >= 4 || captured > 0;
+  next.lastMove = { team: state.currentTeam, pieceIds: moving.map(member => member.id), from, trail, captured, extra, portal: portalLabel };
   next.pending = null;
   if (finished) {
     next.phase = "won";

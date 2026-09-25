@@ -87,3 +87,22 @@ test("the first team to finish four pieces wins", () => {
   assert.equal(moved.phase, "won");
   assert.equal(moved.winner, 0);
 });
+
+test("movement metadata preserves each tile and the arrow jump for animation", () => {
+  const first = movePiece(takeRoll(createGame(), GAE), 0);
+  assert.deepEqual(first.lastMove.trail, ["n1", "n2"]);
+  assert.deepEqual(first.lastMove.pieceIds, [0]);
+
+  const portalGame = createGame();
+  portalGame.pieces[0][0].pos = "n7";
+  const jumped = movePiece(takeRoll(portalGame, DO), 0);
+  assert.deepEqual(jumped.lastMove.trail, ["n8", "b1"]);
+  assert.equal(jumped.lastMove.portal, "하늘 지름길");
+
+  const captureGame = createGame();
+  captureGame.pieces[0][0].pos = "n1";
+  captureGame.pieces[1][0].pos = "n2";
+  const captured = movePiece(takeRoll(captureGame, DO), 0);
+  assert.equal(captured.lastMove.captured, 1);
+  assert.equal(captured.lastMove.extra, true);
+});

@@ -14,7 +14,7 @@
     <header class="topbar">
       <div class="brand"><span class="brand-mark">✳</span><span>흔들어 <strong>윷!</strong></span></div>
       <div class="topbar-actions">
-        <span class="topbar-tag">사진으로 만든 말 · 2팀 대결</span>
+        <span class="topbar-tag">우리 사진으로 즐기는 윷놀이</span>
         <button id="newGameBtn" class="text-button" type="button" hidden>새 게임</button>
       </div>
     </header>
@@ -24,17 +24,19 @@
         <div class="setup-intro">
           <div class="eyebrow">IPAD PARTY GAME</div>
           <h1 id="setupTitle">흔들고, 던지고,<br><em>우리 얼굴로 달려요.</em></h1>
-          <p>두 팀의 사진을 찍으면 각 팀의 말 4개가 완성됩니다. 준비가 끝나면 아이패드를 흔들어 윷을 던져 보세요.</p>
-          <div class="setup-hint"><span>01</span> 팀 이름 · 사진 <i></i><span>02</span> 흔들기 허용 <i></i><span>03</span> 한 판 승부</div>
+          <p>두 팀이 말마다 다른 사진을 찍어 주세요. 여덟 장이 준비되면 아이패드를 흔들어 윷을 던질 수 있어요.</p>
+          <div class="setup-hint"><span>01</span> 팀과 말 사진 <i></i><span>02</span> 윷 던지기 <i></i><span>03</span> 말 고르기</div>
         </div>
         <div class="setup-panel">
-          <div class="panel-heading"><span class="step-label">게임 준비</span><span>2 / 2 팀</span></div>
+          <div class="panel-heading"><span class="step-label">말 사진 준비</span><span id="photoCount">0 / 8장</span></div>
           <div class="team-setup-grid">
             <article class="team-setup team-a">
               <div class="team-heading"><span class="team-index">01</span><span>첫 번째 팀</span></div>
               <label class="field-label" for="name0">팀 이름</label>
               <input id="name0" type="text" maxlength="12" value="분홍팀" autocomplete="off">
-              <div class="photo-preview" id="preview0"><span>사진을 찍어<br>말 만들기</span></div>
+              <p class="slot-hint">사진을 넣을 말을 선택하세요</p>
+              <div id="photos0" class="piece-photo-grid" aria-label="첫 번째 팀 말 사진 4개"></div>
+              <p id="selectedLabel0" class="selected-photo-label">1번 말 사진</p>
               <div class="photo-actions"><button class="photo-button" data-camera="0" type="button">카메라로 찍기</button><button class="upload-button" data-upload="0" type="button">사진 선택</button></div>
               <input id="file0" class="sr-only" type="file" accept="image/*">
             </article>
@@ -42,13 +44,15 @@
               <div class="team-heading"><span class="team-index">02</span><span>두 번째 팀</span></div>
               <label class="field-label" for="name1">팀 이름</label>
               <input id="name1" type="text" maxlength="12" value="청록팀" autocomplete="off">
-              <div class="photo-preview" id="preview1"><span>사진을 찍어<br>말 만들기</span></div>
+              <p class="slot-hint">사진을 넣을 말을 선택하세요</p>
+              <div id="photos1" class="piece-photo-grid" aria-label="두 번째 팀 말 사진 4개"></div>
+              <p id="selectedLabel1" class="selected-photo-label">1번 말 사진</p>
               <div class="photo-actions"><button class="photo-button" data-camera="1" type="button">카메라로 찍기</button><button class="upload-button" data-upload="1" type="button">사진 선택</button></div>
               <input id="file1" class="sr-only" type="file" accept="image/*">
             </article>
           </div>
-          <p id="setupNotice" class="inline-notice" role="status">두 팀의 사진을 준비해 주세요.</p>
-          <button id="startBtn" class="primary-button" type="button" disabled>사진 2장 준비 후 게임 시작 <span>↗</span></button>
+          <p id="setupNotice" class="inline-notice" role="status">두 팀의 말 사진 8장을 준비해 주세요.</p>
+          <button id="startBtn" class="primary-button" type="button" disabled><span id="startText">사진 0/8장 준비</span><span>↗</span></button>
         </div>
       </section>
 
@@ -56,36 +60,50 @@
         <div class="board-column">
           <div class="section-top"><div><div class="eyebrow">THE PLAY BOARD</div><h1>우리들의 말판</h1></div><div class="legend"><span class="legend-dot shortcut"></span> 지름길 <span class="legend-dot return"></span> 되돌이</div></div>
           <div class="board-frame">
-            <div class="board" id="board" aria-label="첨부 이미지에 말을 표시한 윷놀이 말판">
-              <img src="./assets/board-reference.png" alt="대각선 길과 파란 화살표가 있는 윷놀이 말판" draggable="false">
+            <div class="board" id="board" aria-label="새 벡터 윷놀이 말판">
+              <img src="./assets/board.svg" alt="바깥길과 대각선 길, 지름길과 되돌이 화살표가 있는 선명한 윷놀이 말판" draggable="false">
               <div id="portalMarkers" class="board-overlay"></div>
               <div id="boardPieces" class="board-overlay"></div>
             </div>
           </div>
-          <p class="board-caption">파란 화살표 칸에 정확히 도착하면 이동합니다. 모서리와 중앙에서 길을 고를 수 있어요.</p>
         </div>
         <aside class="game-sidebar">
           <div class="turn-card">
             <div class="turn-eyebrow">CURRENT TURN <span id="turnNumber">01</span></div>
-            <div class="current-team"><div id="currentAvatar" class="current-avatar"></div><div><span>지금은</span><strong id="currentTeamName">분홍팀</strong><small>차례입니다</small></div></div>
-            <p id="gameMessage" class="game-message" role="status"></p>
-            <div class="stick-tray" id="stickTray" aria-label="마지막 윷 결과">
-              <div class="stick"><span></span></div><div class="stick"><span></span></div><div class="stick"><span></span></div><div class="stick"><span></span></div>
+            <div class="turn-main">
+              <div class="current-team"><div id="currentAvatar" class="current-avatar"></div><div><span>지금은</span><strong id="currentTeamName">분홍팀</strong><small>차례입니다</small></div></div>
+              <button id="soundBtn" class="sound-button" type="button" aria-label="소리 끄기" aria-pressed="true">♪</button>
             </div>
-            <div id="rollResult" class="roll-result">윷을 던져 주세요</div>
-            <button id="rollBtn" class="roll-button" type="button">윷 던지기 <span>✳</span></button>
-            <button id="motionBtn" class="motion-button" type="button">흔들기 센서 켜기</button>
-            <p id="motionStatus" class="sensor-note">아이패드에서 센서를 허용하면 흔들어 던질 수 있어요.</p>
-          </div>
+            <div class="phase-steps" aria-label="게임 진행 단계">
+              <span id="stepRoll" class="phase-step active"><b>1</b> 윷 던지기</span><span class="step-connector">›</span>
+              <span id="stepSelect" class="phase-step"><b>2</b> 말 고르기</span><span class="step-connector">›</span>
+              <span id="stepMove" class="phase-step"><b>3</b> 이동</span>
+            </div>
+            <p id="gameMessage" class="game-message" role="status"></p>
 
-          <div id="selectionCard" class="selection-card" hidden>
-            <div class="card-title"><span>말 이동</span><small id="movePrompt">말을 선택하세요</small></div>
-            <div id="candidateList" class="candidate-list"></div>
-            <div id="routePanel" class="route-panel" hidden></div>
-          </div>
+            <div id="rollPhase" class="phase-content">
+              <div class="stick-tray" id="stickTray" aria-label="마지막 윷 결과">
+                <div class="stick"><span></span></div><div class="stick"><span></span></div><div class="stick"><span></span></div><div class="stick"><span></span></div>
+              </div>
+              <div id="rollResult" class="roll-result">윷을 던져 주세요</div>
+              <button id="rollBtn" class="roll-button" type="button">윷 던지기 <span>✳</span></button>
+              <button id="motionBtn" class="motion-button" type="button">흔들기 센서 켜기</button>
+              <p id="motionStatus" class="sensor-note">센서를 허용하면 아이패드를 흔들어 던질 수 있어요.</p>
+            </div>
 
-          <div class="score-card"><div class="card-title"><span>진행 현황</span><small>말 4개를 먼저 도착시키세요</small></div><div id="scoreRows"></div></div>
-          <div class="rule-note"><strong>한눈에 보는 규칙</strong><p>같은 팀 말이 만나면 함께 이동합니다. 상대 말을 잡거나 윷·모가 나오면 한 번 더 던집니다. 빽도는 직전에 지나온 칸으로 돌아갑니다.</p></div>
+            <div id="selectPhase" class="phase-content select-phase" hidden>
+              <div class="selection-lead"><span id="moveResult">도</span><span id="movePrompt">움직일 말을 골라 주세요</span></div>
+              <div id="candidateList" class="candidate-list"></div>
+              <div id="routePanel" class="route-panel" hidden></div>
+            </div>
+
+            <div id="movingPhase" class="phase-content moving-phase" hidden>
+              <span class="moving-symbol">✳</span>
+              <strong>말이 이동하고 있어요</strong>
+              <span id="movingCount">한 칸씩 움직이는 중</span>
+            </div>
+          </div>
+          <div class="score-card"><div class="card-title"><span>우리 팀 말</span><small>먼저 4개를 도착시키세요</small></div><div id="scoreRows"></div></div>
         </aside>
       </section>
     </main>
@@ -93,11 +111,11 @@
 
   <div id="cameraModal" class="modal" hidden>
     <div class="modal-backdrop"></div>
-    <div class="camera-dialog" role="dialog" aria-modal="true" aria-label="팀 사진 찍기">
-      <div class="modal-header"><strong>팀 사진 찍기</strong><button id="closeCameraBtn" type="button" aria-label="닫기">×</button></div>
+    <div class="camera-dialog" role="dialog" aria-modal="true" aria-labelledby="cameraTitle">
+      <div class="modal-header"><strong id="cameraTitle">말 사진 찍기</strong><button id="closeCameraBtn" type="button" aria-label="닫기">×</button></div>
       <div class="video-wrap"><video id="cameraVideo" autoplay playsinline muted></video><div class="camera-guide"></div></div>
       <p>얼굴이 동그란 가이드 안에 오게 맞춰 주세요.</p>
-      <button id="captureBtn" class="primary-button" type="button">사진 찍기 <span>●</span></button>
+      <button id="captureBtn" class="primary-button" type="button">이 말 사진 찍기 <span>●</span></button>
     </div>
   </div>
 
@@ -107,7 +125,7 @@
       <div class="winner-star">✳</div><div class="eyebrow">GAME OVER</div>
       <h2 id="winnerTitle">승리!</h2><p>말 4개가 모두 도착했어요.</p>
       <button id="playAgainBtn" class="primary-button" type="button">같은 사진으로 다시 하기 <span>↗</span></button>
-      <button id="newPhotosBtn" class="text-button" type="button">팀 사진 다시 찍기</button>
+      <button id="newPhotosBtn" class="text-button" type="button">말 사진 다시 찍기</button>
     </div>
   </div>
   <script type="module" src="./app.js"></script>

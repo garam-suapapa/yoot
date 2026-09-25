@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 527 483" role="img" aria-labelledby="title description">
+<title id="title">흔들어 윷! 벡터 말판</title><desc id="description">바깥길과 중앙 대각선 길, 지름길 화살표 하나와 되돌이 화살표 둘</desc>
+
+
+<rect width="527" height="483" fill="#fffdf6"/>
+<rect x="8" y="8" width="511" height="467" rx="24" fill="none" stroke="#eee9dc" stroke-width="2"/>
+<polyline fill="none" stroke="#d9d2c4" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 5" points="456.9,440.5 456.9,355.0 456.9,281.1 456.9,206.2 456.9,132.3 456.9,44.9 370.5,44.9 295.6,44.9 221.9,44.9 148.1,44.9 66.9,44.9 66.9,132.3 66.9,206.2 66.9,281.1 66.9,355.0 66.9,440.5 148.1,440.5 221.9,440.5 295.6,440.5 370.5,440.5 456.9,440.5"/>
+<polyline fill="none" stroke="#e5c9d0" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" points="456.9,44.9 395.8,105.3 356.3,145.4 316.2,184.5 260.9,243.4 206.1,296.1 165.5,335.7 126.0,375.8 66.9,440.5"/>
+<polyline fill="none" stroke="#e5c9d0" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" points="66.9,44.9 126.0,105.3 165.5,145.4 206.1,184.5 260.9,243.4 316.2,296.1 356.3,335.7 395.8,375.8 456.9,440.5"/>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M277 65 C226 64 175 70 139 99" stroke="#159ac0" stroke-width="3.3"/>
+<path d="M185 141 C260 115 357 126 433 259" stroke="#e7638a" stroke-width="3.3"/>
+<path d="M342 344 C284 397 191 406 108 418" stroke="#e7638a" stroke-width="3.3"/>
+<path d="M148 88 L139 99 L152 99" stroke="#159ac0" stroke-width="3.3"/>
+<path d="M424 249 L433 259 L421 261" stroke="#e7638a" stroke-width="3.3"/>
+<path d="M120 409 L108 418 L123 421" stroke="#e7638a" stroke-width="3.3"/>
+</g><g><g data-node="n0"><circle fill="#fff0d5" stroke="#ea9b54" stroke-width="3.5" cx="456.9" cy="440.5" r="24"/><text font-family="system-ui,sans-serif" font-size="10" font-weight="800" fill="#53565b" x="456.9" y="444.5" text-anchor="middle">출발</text></g>
+    <g data-node="n1"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="456.9" cy="355" r="15"/><circle cx="456.9" cy="355" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n2"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="456.9" cy="281.1" r="15"/><circle cx="456.9" cy="281.1" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n3"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="456.9" cy="206.2" r="15"/><circle cx="456.9" cy="206.2" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n4"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="456.9" cy="132.3" r="15"/><circle cx="456.9" cy="132.3" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n5"><circle fill="#fff6e8" stroke="#d787a7" stroke-width="3" cx="456.9" cy="44.9" r="24"/><text font-family="system-ui,sans-serif" font-size="10" font-weight="800" fill="#53565b" x="456.9" y="48.9" text-anchor="middle">갈림</text></g>
+    <g data-node="n6"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="370.5" cy="44.9" r="15"/><circle cx="370.5" cy="44.9" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n7"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="295.6" cy="44.9" r="15"/><circle cx="295.6" cy="44.9" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n8"><circle fill="#e7f9ff" stroke="#159ac0" stroke-width="2.8" cx="221.9" cy="44.9" r="18"/><text font-family="system-ui,sans-serif" font-size="17" font-weight="900" fill="#c94b80" x="221.9" y="50.9" text-anchor="middle">↙</text></g>
+    <g data-node="n9"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="148.1" cy="44.9" r="15"/><circle cx="148.1" cy="44.9" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n10"><circle fill="#fff6e8" stroke="#d787a7" stroke-width="3" cx="66.9" cy="44.9" r="24"/><text font-family="system-ui,sans-serif" font-size="10" font-weight="800" fill="#53565b" x="66.9" y="48.9" text-anchor="middle">갈림</text></g>
+    <g data-node="n11"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="66.9" cy="132.3" r="15"/><circle cx="66.9" cy="132.3" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n12"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="66.9" cy="206.2" r="15"/><circle cx="66.9" cy="206.2" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n13"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="66.9" cy="281.1" r="15"/><circle cx="66.9" cy="281.1" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n14"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="66.9" cy="355" r="15"/><circle cx="66.9" cy="355" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n15"><circle fill="#fff6e8" stroke="#d787a7" stroke-width="3" cx="66.9" cy="440.5" r="24"/><text font-family="system-ui,sans-serif" font-size="10" font-weight="800" fill="#53565b" x="66.9" y="444.5" text-anchor="middle">갈림</text></g>
+    <g data-node="n16"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="148.1" cy="440.5" r="15"/><circle cx="148.1" cy="440.5" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n17"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="221.9" cy="440.5" r="15"/><circle cx="221.9" cy="440.5" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n18"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="295.6" cy="440.5" r="15"/><circle cx="295.6" cy="440.5" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="n19"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="370.5" cy="440.5" r="15"/><circle cx="370.5" cy="440.5" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="a1"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="395.8" cy="105.3" r="13"/><circle cx="395.8" cy="105.3" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="a2"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="356.3" cy="145.4" r="13"/><circle cx="356.3" cy="145.4" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="a3"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="316.2" cy="184.5" r="13"/><circle cx="316.2" cy="184.5" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="b1"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="126" cy="105.3" r="13"/><circle cx="126" cy="105.3" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="b2"><circle fill="#fff0f4" stroke="#e7638a" stroke-width="2.8" cx="165.5" cy="145.4" r="18"/><text font-family="system-ui,sans-serif" font-size="17" font-weight="900" fill="#c94b80" x="165.5" y="151.4" text-anchor="middle">↶</text></g>
+    <g data-node="b3"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="206.1" cy="184.5" r="13"/><circle cx="206.1" cy="184.5" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="c"><circle fill="#e9f7e7" stroke="#63b28c" stroke-width="3.5" cx="260.9" cy="243.4" r="25"/><text font-family="system-ui,sans-serif" font-size="10" font-weight="800" fill="#53565b" x="260.9" y="247.4" text-anchor="middle">중앙</text></g>
+    <g data-node="l1"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="206.1" cy="296.1" r="13"/><circle cx="206.1" cy="296.1" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="l2"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="165.5" cy="335.7" r="13"/><circle cx="165.5" cy="335.7" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="l3"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="126" cy="375.8" r="13"/><circle cx="126" cy="375.8" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="r1"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="316.2" cy="296.1" r="13"/><circle cx="316.2" cy="296.1" r="3.3" fill="#d47b9b"/></g>
+    <g data-node="r2"><circle fill="#fff0f4" stroke="#e7638a" stroke-width="2.8" cx="356.3" cy="335.7" r="18"/><text font-family="system-ui,sans-serif" font-size="17" font-weight="900" fill="#c94b80" x="356.3" y="341.7" text-anchor="middle">↶</text></g>
+    <g data-node="r3"><circle fill="#ffffff" stroke="#dc9fb5" stroke-width="2.1" cx="395.8" cy="375.8" r="13"/><circle cx="395.8" cy="375.8" r="3.3" fill="#d47b9b"/></g></g>
+</svg>
